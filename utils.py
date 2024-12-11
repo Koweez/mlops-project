@@ -17,6 +17,16 @@ def file_to_img(file: UploadFile, out_shape=(1, 1, 256, 256)):
     img = torch.tensor(np.array(img)).float().unsqueeze(0).unsqueeze(0)
     return img
 
+def bytes_to_img(image_bytes: bytes, out_shape=(1, 1, 256, 256)):
+    print(f"type of image_bytes: {type(image_bytes)}")
+    img = Image.open(io.BytesIO(image_bytes)).convert("L")
+    print(f"after opening image: {img}")
+    img = img.resize((out_shape[3], out_shape[2]))
+    print(f"after resizing image: {img}")
+    img = torch.tensor(np.array(img)).float().unsqueeze(0).unsqueeze(0)
+    print(f"after converting to tensor: {img}")
+    return img
+
 def load_onnx_model(onnx_model_path):
     return rt.InferenceSession(onnx_model_path)
 
@@ -25,13 +35,13 @@ def load_torch_model(torch_model_path, device=torch.device("cpu")):
     model.eval()
     return model
 
-def predict_onnx(model, file):
-    input = file_to_img(file).numpy()
+def predict_onnx(model, image_bytes: bytes):
+    input = bytes_to_img(image_bytes)
     out = model.run(None, {"input.1": input})
     return out[0]
 
-def predict_torch(model, file):
-    input = file_to_img(file)
+def predict_torch(model, image_bytes: bytes):
+    input = bytes_to_img(image_bytes)
     out = model(input)
     return out.cpu().detach().numpy()
 
