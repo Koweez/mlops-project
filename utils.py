@@ -1,3 +1,4 @@
+import os
 import onnxruntime as rt
 import torch
 from fastapi import UploadFile
@@ -14,6 +15,7 @@ def file_to_img(file: UploadFile, out_shape=(1, 1, 256, 256)):
     img = Image.open(file_content).convert("L")
     img = img.resize((out_shape[3], out_shape[2]))
     img = torch.tensor(np.array(img)).float().unsqueeze(0).unsqueeze(0)
+    return img
 
 def load_onnx_model(onnx_model_path):
     return rt.InferenceSession(onnx_model_path)
@@ -37,8 +39,16 @@ def pick_random_image(annotation_file):
     import random
     df = pd.read_csv(annotation_file)
     img_path = random.choice(df.iloc[:, 0])
+    print(f"image path: {img_path}")
+    
+    # add data/train to the path
+    img_path =  "data/train" + img_path
+    
+    print(f"image path after absolute path: {img_path}")
+    
     img = Image.open(img_path).convert("L")
     return img
     
+abs_path = os.path.abspath("data/annotation_dataframe.csv")
 
-img = pick_random_image("data/annotations_dataframe.csv")
+img = pick_random_image(abs_path)

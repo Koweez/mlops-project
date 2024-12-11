@@ -1,0 +1,15 @@
+[project]
+name = "mlops-project"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi[standard]>=0.115.6",
+    "numpy>=2.2.0",
+    "onnx>=1.17.0",
+    "onnxruntime>=1.20.1",
+    "pandas>=2.2.3",
+    "streamlit>=1.41.0",
+    "torch>=2.5.1",
+]
