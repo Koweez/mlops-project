@@ -56,9 +56,7 @@ if uploaded_file is not None:
         # Send the image as a FastAPI UploadFile
         body = {"file": (uploaded_file.name, uploaded_file.getvalue(), uploaded_file.type)}
         response = requests.post(api_url, files=body)
-        
-        print(f"Response: {response}")
-        
+                
         if response.status_code == 200:
             st.success("Prediction successful!")
             # received bytes
