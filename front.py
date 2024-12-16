@@ -14,9 +14,9 @@ async def convert_to_upload_file(uploaded_file):
 
 
 # wide layout
-# st.set_page_config(layout="wide")
+st.set_page_config(layout="wide")
 
-# Columns for title and dropdown
+# columns for title and dropdown
 col1, col2 = st.columns([3, 1])
 
 with col1:
@@ -38,39 +38,46 @@ st.markdown(
 uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "jpeg", "png"])
 
 if uploaded_file is not None:
-    st.markdown(
-        """<div style='text-align: center;'>
-        <h4>Uploaded Image</h4>
-    </div>""",
-        unsafe_allow_html=True,
-    )
-    st.image(uploaded_file, caption="Uploaded Image", use_container_width=True)
+    col1_body, col2_body = st.columns([2, 2])
+
+    with col1_body:
+        st.markdown(
+            """<div style='text-align: center;'>
+            <h4>Uploaded Image</h4>
+        </div>""",
+            unsafe_allow_html=True,
+        )
+        st.image(uploaded_file, caption="Uploaded Image", use_container_width=True)
 
     api_url = f"http://localhost:8000/predict_{selected_model}"
 
-    st.markdown(
-        f"""<div style='text-align: center;'>
-        <h4>Processing with Model: {selected_model}</h4>
-    </div>""",
-        unsafe_allow_html=True,
-    )
+    with col2_body:
+        st.markdown(
+            f"""<div style='text-align: center;'>
+            <h4>Processing with Model: {selected_model}</h4>
+        </div>""",
+            unsafe_allow_html=True,
+        )
 
-    try:
-        # Send the image as a FastAPI UploadFile
-        body = {
-            "file": (uploaded_file.name, uploaded_file.getvalue(), uploaded_file.type)
-        }
-        response = requests.post(api_url, files=body)
+        try:
+            body = {
+                "file": (
+                    uploaded_file.name,
+                    uploaded_file.getvalue(),
+                    uploaded_file.type,
+                )
+            }
+            response = requests.post(api_url, files=body)
 
-        if response.status_code == 200:
-            st.success("Prediction successful!")
-            # received bytes
-            # convert to image
-            img = Image.open(BytesIO(response.content))
-            st.image(img, caption="Segmented Image", use_container_width=True)
+            if response.status_code == 200:
+                # st.success("Prediction successful!")
+                # received bytes
+                # convert to image
+                img = Image.open(BytesIO(response.content))
+                st.image(img, caption="Segmented Image", use_container_width=True)
 
-        else:
-            st.error(f"Error from API: {response.status_code}")
-            st.error(response.text)
-    except Exception as e:
-        st.error(f"An error occurred: {str(e)}")
+            else:
+                st.error(f"Error from API: {response.status_code}")
+                st.error(response.text)
+        except Exception as e:
+            st.error(f"An error occurred: {str(e)}")
