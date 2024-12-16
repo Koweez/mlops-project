@@ -1,0 +1,12 @@
+# name: "MLOps Project"
+
+# services:
+#   frontend:
+#     image:
+
+#     ports:
+#       - "8501:8501"
+
+#   backend:
+#     ports:
+#       - "8000:8000"
