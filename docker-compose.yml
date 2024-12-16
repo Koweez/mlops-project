@@ -1,12 +1,23 @@
-# name: "MLOps Project"
+name: "MLOps Project"
+version: "3.9"
 
-# services:
-#   frontend:
-#     image:
+services:
+  frontend:
+    build:
+      context: ./front
+      dockerfile: Dockerfile
+    container_name: frontend
+    ports:
+      - "8501:8501"
+    depends_on:
+      - backend
+    restart: unless-stopped
 
-#     ports:
-#       - "8501:8501"
-
-#   backend:
-#     ports:
-#       - "8000:8000"
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: backend
+    ports:
+      - "8000:8000"
+    restart: unless-stopped

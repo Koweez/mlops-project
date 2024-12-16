@@ -1,0 +1,6 @@
+fastapi[standard]
+numpy
+pandas
+torch
+onnxruntime
+Pillow

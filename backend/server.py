@@ -1,6 +1,5 @@
 import io
 
-import uvicorn
 from fastapi import FastAPI, File, Response, UploadFile
 from PIL import Image
 
@@ -9,12 +8,12 @@ from utils import load_onnx_model, load_torch_model, predict_onnx, predict_torch
 app = FastAPI()
 
 # load the models
-torch_model = load_torch_model("models/model.pt")
-onnx_model = load_onnx_model("models/onnx_model.onnx")
+torch_model = load_torch_model("/app/models/model.pt")
+onnx_model = load_onnx_model("/app/models/onnx_model.onnx")
 
-@app.get("/")
-def read_root():
-    return {"Hello": "World"}
+@app.get("/_stcore/health")
+def health():
+    return {"status": "healthy"}
 
 @app.post("/predict_torch")
 def predict_torch_api(file: UploadFile = File(...)):
@@ -57,6 +56,3 @@ def predict_onnx_api(file: UploadFile = File(...)):
     buffer.seek(0)
 
     return Response(content=buffer.read(), media_type="image/png")
-
-if __name__ == "__main__":
-    uvicorn.run(app, host="127.0.0.1", port=8000)

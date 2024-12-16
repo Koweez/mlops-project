@@ -18,13 +18,9 @@ def file_to_img(file: UploadFile, out_shape=(1, 1, 256, 256)):
     return img
 
 def bytes_to_img(image_bytes: bytes, out_shape=(1, 1, 256, 256)):
-    print(f"type of image_bytes: {type(image_bytes)}")
     img = Image.open(io.BytesIO(image_bytes)).convert("L")
-    print(f"after opening image: {img}")
     img = img.resize((out_shape[3], out_shape[2]))
-    print(f"after resizing image: {img}")
     img = torch.tensor(np.array(img)).float().unsqueeze(0).unsqueeze(0)
-    print(f"after converting to tensor: {img}")
     return img
 
 def load_onnx_model(onnx_model_path):
@@ -38,8 +34,6 @@ def load_torch_model(torch_model_path, device=torch.device("cpu")):
 def predict_onnx(model, image_bytes: bytes):
     input = bytes_to_img(image_bytes)
     # print input shape and type
-    print(f"input shape: {input.shape}")
-    print(f"input type: {input.dtype}")
     out = model.run(None, {"input.1": input.numpy()})
     return out[0]
 
@@ -47,21 +41,3 @@ def predict_torch(model, image_bytes: bytes):
     input = bytes_to_img(image_bytes)
     out = model(input)
     return out.cpu().detach().numpy()
-
-def pick_random_image(annotation_file):
-    import random
-    df = pd.read_csv(annotation_file)
-    img_path = random.choice(df.iloc[:, 0])
-    print(f"image path: {img_path}")
-    
-    # add data/train to the path
-    img_path =  "data/train" + img_path
-    
-    print(f"image path after absolute path: {img_path}")
-    
-    img = Image.open(img_path).convert("L")
-    return img
-    
-abs_path = os.path.abspath("data/annotation_dataframe.csv")
-
-img = pick_random_image(abs_path)

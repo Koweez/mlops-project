@@ -49,7 +49,7 @@ if uploaded_file is not None:
         )
         st.image(uploaded_file, caption="Uploaded Image", use_container_width=True)
 
-    api_url = f"http://localhost:8000/predict_{selected_model}"
+    api_url = f"http://backend:8000/predict_{selected_model}"
 
     with col2_body:
         st.markdown(
