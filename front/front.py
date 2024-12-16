@@ -1,9 +1,12 @@
+import os
 from io import BytesIO
 
 import requests
 import streamlit as st
 from fastapi import UploadFile
 from PIL import Image
+
+BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8000")
 
 
 async def convert_to_upload_file(uploaded_file):
@@ -12,6 +15,10 @@ async def convert_to_upload_file(uploaded_file):
         file=BytesIO(uploaded_file.read()),
     )
 
+
+model_to_select = requests.get(f"{BACKEND_URL}/get_available_models")
+
+# print(model_to_select)
 
 # wide layout
 st.set_page_config(layout="wide")
@@ -23,9 +30,8 @@ with col1:
     st.title("Cells Segmentation")
 
 with col2:
-    model_versions = ["torch", "onnx"]
     selected_model = st.selectbox(
-        "Choose Model Version:", model_versions, index=0, key="model_select"
+        "Select a model", [model["name"] for model in model_to_select.json()]
     )
 
 st.markdown(
@@ -49,7 +55,7 @@ if uploaded_file is not None:
         )
         st.image(uploaded_file, caption="Uploaded Image", use_container_width=True)
 
-    api_url = f"http://backend:8000/predict_{selected_model}"
+    api_url = f"{BACKEND_URL}/predict_{selected_model}"
 
     with col2_body:
         st.markdown(
@@ -65,7 +71,8 @@ if uploaded_file is not None:
                     uploaded_file.name,
                     uploaded_file.getvalue(),
                     uploaded_file.type,
-                )
+                ),
+                "model_name": selected_model,
             }
             response = requests.post(api_url, files=body)
 
