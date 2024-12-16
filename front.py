@@ -1,16 +1,19 @@
-import streamlit as st
-from PIL import Image
-import requests
-from fastapi import UploadFile
 from io import BytesIO
 
+import requests
+import streamlit as st
+from fastapi import UploadFile
+from PIL import Image
+
+
 async def convert_to_upload_file(uploaded_file):
-    return await UploadFile(
+    return UploadFile(
         filename=uploaded_file.name,
         file=BytesIO(uploaded_file.read()),
     )
 
-# Uncomment if you want wide layout
+
+# wide layout
 # st.set_page_config(layout="wide")
 
 # Columns for title and dropdown
@@ -42,28 +45,30 @@ if uploaded_file is not None:
         unsafe_allow_html=True,
     )
     st.image(uploaded_file, caption="Uploaded Image", use_container_width=True)
-    
+
     api_url = f"http://localhost:8000/predict_{selected_model}"
-    
+
     st.markdown(
         f"""<div style='text-align: center;'>
         <h4>Processing with Model: {selected_model}</h4>
     </div>""",
         unsafe_allow_html=True,
     )
-    
+
     try:
         # Send the image as a FastAPI UploadFile
-        body = {"file": (uploaded_file.name, uploaded_file.getvalue(), uploaded_file.type)}
+        body = {
+            "file": (uploaded_file.name, uploaded_file.getvalue(), uploaded_file.type)
+        }
         response = requests.post(api_url, files=body)
-                
+
         if response.status_code == 200:
             st.success("Prediction successful!")
             # received bytes
             # convert to image
             img = Image.open(BytesIO(response.content))
             st.image(img, caption="Segmented Image", use_container_width=True)
-            
+
         else:
             st.error(f"Error from API: {response.status_code}")
             st.error(response.text)
