@@ -1,4 +1,4 @@
-name: "MLOps Project"
+name: "SegmentationMLOps"
 
 services:
   frontend:
