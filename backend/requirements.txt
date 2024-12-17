@@ -4,5 +4,3 @@ pandas
 torch
 onnxruntime
 Pillow
-mlflow
-onnx

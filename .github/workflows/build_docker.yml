@@ -1,0 +1,24 @@
+name: Build and Push to Registry
+on: [push]
+jobs:
+  Build-Image:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy the model
+        run: |
+          docker compose build
+          docker tag app ${{ secrets.REGISTRY }}/${{ secrets.IMAGE_NAME }}:${{ github.sha }}
+          docker login -u ${{ secrets.REGISTRY_USER }} -p ${{ secrets.REGISTRY_PASSWORD }}
+          docker push ${{ secrets.REGISTRY }}/${{ secrets.IMAGE_NAME }}:${{ github.sha }}
+
+      - name: Setup SSH with PEM file
+        run: |
+          echo "${{ secrets.VM_PEM_FILE }}" | base64 --decode > /tmp/private-key.pem
+          chmod 600 /tmp/private-key.pem
+
+      - name: Pull on the VM
+        run: |
+          ssh -i /tmp/private-key.pem -o StrictHostKeyChecking=no ${{ secrets.REGISTRY_USER }}@${{ secrets.IP }} \
+          "docker pull ${{ secrets.REGISTRY }}/${{ secrets.IMAGE_NAME }}:${{ github.sha }}"; \
+          docker run -d -p 8501:8501 ${{ secrets.REGISTRY }}/${{ secrets.IMAGE_NAME }}:${{ github.sha }}

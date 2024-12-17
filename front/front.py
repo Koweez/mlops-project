@@ -15,10 +15,7 @@ async def convert_to_upload_file(uploaded_file):
         file=BytesIO(uploaded_file.read()),
     )
 
-
-model_to_select = requests.get(f"{BACKEND_URL}/get_available_models")
-
-# print(model_to_select)
+model_to_select = ["torch", "onnx"]
 
 # wide layout
 st.set_page_config(layout="wide")
@@ -31,7 +28,7 @@ with col1:
 
 with col2:
     selected_model = st.selectbox(
-        "Select a model", [model["name"] for model in model_to_select.json()]
+        "Select a model", [model for model in model_to_select]
     )
 
 st.markdown(
@@ -71,8 +68,7 @@ if uploaded_file is not None:
                     uploaded_file.name,
                     uploaded_file.getvalue(),
                     uploaded_file.type,
-                ),
-                "model_name": selected_model,
+                )
             }
             response = requests.post(api_url, files=body)
 

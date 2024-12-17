@@ -46,9 +46,3 @@ def predict_torch(model, image_bytes: bytes):
     input = bytes_to_img(image_bytes)
     out = model(input)
     return out.cpu().detach().numpy()
-
-
-def predict_mlflow(model, image_bytes: bytes):
-    input = bytes_to_img(image_bytes)
-    out = model.predict(input)
-    return out
