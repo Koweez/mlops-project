@@ -8,9 +8,17 @@ jobs:
       - name: Deploy the model
         run: |
           docker compose build
-          docker tag segmentation ${{ secrets.REGISTRY }}/${{ secrets.IMAGE_NAME }}:${{ github.sha }}
-          docker login -u ${{ secrets.REGISTRY_USER }} -p ${{ secrets.REGISTRY_PASSWORD }}
-          docker push ${{ secrets.REGISTRY }}/${{ secrets.IMAGE_NAME }}:${{ github.sha }}
+          docker tag segmentation_frontend:latest ${{ secrets.REGISTRY }}/${{ secrets.IMAGE_NAME }}-frontend:${{ github.sha }}
+          docker tag segmentation_backend:latest ${{ secrets.REGISTRY }}/${{ secrets.IMAGE_NAME }}-backend:${{ github.sha }}
+        
+      - name: Login to the registry
+        run: docker login -u ${{ secrets.REGISTRY_USER }} -p ${{ secrets.REGISTRY_PASSWORD }}
+        
+      - name: Push to the registry
+        run: |
+          docker push ${{ secrets.REGISTRY }}/${{ secrets.IMAGE_NAME }}-frontend:${{ github.sha }}
+          docker push ${{ secrets.REGISTRY }}/${{ secrets.IMAGE_NAME }}-backend:${{ github.sha }}
+          
 
       - name: Setup SSH with PEM file
         run: |
@@ -19,6 +27,12 @@ jobs:
 
       - name: Pull on the VM
         run: |
-          ssh -i /tmp/private-key.pem -o StrictHostKeyChecking=no ${{ secrets.REGISTRY_USER }}@${{ secrets.IP }} \
-          "docker pull ${{ secrets.REGISTRY }}/${{ secrets.IMAGE_NAME }}:${{ github.sha }}"; \
-          docker run -d -p 8501:8501 ${{ secrets.REGISTRY }}/${{ secrets.IMAGE_NAME }}:${{ github.sha }}
+          ssh -i /tmp/private-key.pem -o StrictHostKeyChecking=no ${{ secrets.REGISTRY_USER }}@${{ secrets.IP }} << EOF
+            docker pull ${{ secrets.REGISTRY }}/${{ secrets.IMAGE_NAME }}-frontend:${{ github.sha }}
+            docker pull ${{ secrets.REGISTRY }}/${{ secrets.IMAGE_NAME }}-backend:${{ github.sha }}
+          
+            docker stop frontend backend || true && docker rm frontend backend || true
+
+            docker run -d -p 8501:8501 --name frontend ${{ secrets.REGISTRY }}/${{ secrets.IMAGE_NAME }}-frontend:${{ github.sha }}
+            docker run -d -p 8000:8000 --name backend ${{ secrets.REGISTRY }}/${{ secrets.IMAGE_NAME }}-backend:${{ github.sha }}
+          EOF
