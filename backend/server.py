@@ -1,43 +1,49 @@
 import io
+import os
+from contextlib import asynccontextmanager
 
 import mlflow
-import numpy as np
+import onnx
+import torch
 from fastapi import FastAPI, File, Response, UploadFile
-from mlflow.models import infer_signature
 from mlflow.tracking import MlflowClient
 from PIL import Image
 from utils import (
-    load_onnx_model,
-    load_torch_model,
     predict_mlflow,
     predict_onnx,
     predict_torch,
 )
 
-app = FastAPI()
-
-mlflow.set_tracking_uri("http://mlflow:5000")
 client = MlflowClient()
 
+# env variables
+model_path = os.getenv("MODEL_PATH", "models/")
+mlflow_path = os.getenv("MLFLOW_PATH", "http://127.0.0.1:5000")
 
-loaded_models = {}
+torch_model_path = model_path + "model.pt"
+onnx_model_path = model_path + "onnx_model.onnx"
+
+models = [
+    {
+        "name": "torch_segmentation_model",
+        "path": torch_model_path,
+        "framework": "torch",
+    },
+    {
+        "name": "onnx_segmentation_model",
+        "path": onnx_model_path,
+        "framework": "onnx",
+    },
+]
+
+loaded_models = {}  # to cache the models in memory
 
 
-@app.on_event("startup")
-def register_and_load_models():
-    models = [
-        {
-            "name": "torch_segmentation_model",
-            "path": "/app/models/model.pt",
-            "framework": "torch",
-        },
-        {
-            "name": "onnx_segmentation_model",
-            "path": "/app/models/onnx_model.onnx",
-            "framework": "onnx",
-        },
-    ]
-
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    print("Server started")
+    # before the server starts
+    mlflow.set_tracking_uri(mlflow_path)
     for model in models:
         model_name = model["name"]
         model_path = model["path"]
@@ -46,21 +52,15 @@ def register_and_load_models():
         if any(m.name == model_name for m in client.search_registered_models()):
             print(f"model '{model_name}' is already registered.")
         else:
-            signature = infer_signature(np.random.randn(1, 1, 256, 256))
+            # signature = infer_signature(np.random.randn(1, 1, 256, 256))
             try:
                 with mlflow.start_run(run_name=f"registering {model_name}"):
                     if framework == "torch":
-                        mlflow.pytorch.log_model(
-                            model=mlflow.pytorch.load_model(model_path),
-                            artifact_path="model",
-                            signature=signature,
-                        )
+                        model = torch.load(model_path)
+                        mlflow.pytorch.log_model(model, "pytorch_model")
                     elif framework == "onnx":
-                        mlflow.onnx.log_model(
-                            onnx_model=model_path,
-                            artifact_path="model",
-                            signature=signature,
-                        )
+                        model = onnx.load(model_path)
+                        mlflow.onnx.log_model(model, "onnx_model")
                     else:
                         raise ValueError(f"unsupported framework: {framework}")
                 print(f"model '{model_name}' registered successfully.")
@@ -74,11 +74,16 @@ def register_and_load_models():
             print(f"model '{model_name}' loaded and cached successfully.")
         except Exception as e:
             print(f"error loading model '{model_name}': {e}")
+    yield
+    # after the server stops
+    print("Server stopped")
 
+
+app = FastAPI(lifespan=lifespan)
 
 # load the models
-torch_model = load_torch_model("/app/models/model.pt")
-onnx_model = load_onnx_model("/app/models/onnx_model.onnx")
+# torch_model = load_torch_model("/app/models/model.pt")
+# onnx_model = load_onnx_model("/app/models/onnx_model.onnx")
 
 
 @app.get("/_stcore/health")
