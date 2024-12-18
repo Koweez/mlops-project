@@ -37,7 +37,6 @@ def load_torch_model(torch_model_path, device=torch.device("cpu")):
 
 def predict_onnx(model, image_bytes: bytes):
     input = bytes_to_img(image_bytes)
-    # print input shape and type
     out = model.run(None, {"input.1": input.numpy()})
     return out[0]
 
