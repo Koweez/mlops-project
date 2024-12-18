@@ -33,6 +33,6 @@ jobs:
           
             docker stop frontend backend || true && docker rm frontend backend || true
 
-            docker run -d -p 8501:8501 --name frontend ${{ secrets.REGISTRY }}/${{ secrets.IMAGE_NAME }}-frontend:${{ github.sha }}
+            docker run -d -p 8501:8501 --name frontend -e BACKEND_URL=http://${{ secrets.IP }}:8000 ${{ secrets.REGISTRY }}/${{ secrets.IMAGE_NAME }}-frontend:${{ github.sha }}
             docker run -d -p 8000:8000 --name backend ${{ secrets.REGISTRY }}/${{ secrets.IMAGE_NAME }}-backend:${{ github.sha }}
           EOF

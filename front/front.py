@@ -6,7 +6,7 @@ import streamlit as st
 from fastapi import UploadFile
 from PIL import Image
 
-BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8000")
+BACKEND_URL = os.getenv("BACKEND_URL", "http://20.56.13.240:8000")
 
 
 async def convert_to_upload_file(uploaded_file):
